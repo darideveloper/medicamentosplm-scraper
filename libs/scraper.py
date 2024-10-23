@@ -26,17 +26,21 @@ class Scraper():
             }
         }
         
-    def __get_page_soup__(self, page: int) -> bs4.BeautifulSoup:
-        """ Return bs4 instance of a specific page
+        # Scraping control variables
+        self.letter = ''
+        self.page = 0
         
-        Args:
-            page (int): The page number
+    def __get_page_soup__(self, page: int = 0) -> bs4.BeautifulSoup:
+        """ Return bs4 instance of a specific page
         
         Returns:
             bs4.BeautifulSoup: The page content
         """
         
-        url = f"{self.home_page}/A/{page}"
+        if not page:
+            page = self.page
+        
+        url = f"{self.home_page}/{self.letter}/{page}"
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                           '(KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
@@ -68,7 +72,7 @@ class Scraper():
         pages = len(page_btns) - 2
         return pages
     
-    def __get_page_data__(self, page: int) -> list[dict]:
+    def __get_page_data__(self) -> list[dict]:
         """ Get data from a specific page of results
 
         Returns:
@@ -81,7 +85,7 @@ class Scraper():
         """
         
         # Get page soup
-        soup = self.__get_page_soup__(page)
+        soup = self.__get_page_soup__()
         
         # Loop table rows (skip header)
         data = []
@@ -101,8 +105,26 @@ class Scraper():
                 
     def get_data(self):
         
-        max_pages = self.__get_max_pages_num__()
-        for page in range(1, max_pages + 1):
-            logger.info(f"Getting data from page {page}...")
-            page_data = self.__get_page_data__(page)
-            print(page_data)
+        letters = [chr(i) for i in range(65, 91)]
+        for letter in letters:
+            self.letter = letter
+            max_pages = self.__get_max_pages_num__()
+            
+            for page in range(1, max_pages + 1):
+                
+                # Get data
+                logger.info(f"Getting data from letter '{letter}' page '{page}'...")
+                self.page = page
+                page_data = self.__get_page_data__()
+                
+                # Temp save data in csv
+                import csv
+                import os
+                
+                parent_folder = os.path.dirname(os.path.abspath(__file__))
+                current_folder = os.path.dirname(parent_folder)
+                csv_file = os.path.join(current_folder, "temp.csv")
+                with open(csv_file, mode='a', newline='', encoding='utf-8') as file:
+                    writer = csv.DictWriter(file, fieldnames=page_data[0].keys())
+                    for row in page_data:
+                        writer.writerow(row)
