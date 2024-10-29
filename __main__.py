@@ -52,9 +52,9 @@ def main():
         total_time = end_time - start_time
         total_time_minutes = total_time / 60
         total_time_hours = total_time / 3600
-        logger.info(f"Total time: {total_time:.2f} seconds")
-        logger.info(f"Total time: {total_time_minutes:.2f} minutes")
-        logger.info(f"Total time: {total_time_hours:.2f} hours")
+        logger.debug(f"Total time: {total_time:.2f} seconds")
+        logger.debug(f"Total time: {total_time_minutes:.2f} minutes")
+        logger.debug(f"Total time: {total_time_hours:.2f} hours")
     
 
 if __name__ == "__main__":

@@ -1,5 +1,3 @@
-from time import sleep
-
 import bs4
 import requests
 
@@ -18,11 +16,26 @@ class Scraper():
             "page_btn": '.row + .container li.page-item',
             "table_row": '.fila',
             "table_columns": {
-                "medication": 'div:nth-child(1)',
-                "substance": 'div:nth-child(2)',
-                "pharmaceutical_form": 'div:nth-child(3)',
-                "laboratory": 'div:nth-child(4)',
-                "presentation": 'div:nth-child(5)',
+                "medication": {
+                    "value": '> div:nth-child(1)',
+                    "type": str,
+                },
+                "substance": {
+                    "value": '> div:nth-child(2) > a',
+                    "type": list,
+                },
+                "pharmaceutical_form": {
+                    "value": '> div:nth-child(3)',
+                    "type": str,
+                },
+                "laboratory": {
+                    "value": '> div:nth-child(4)',
+                    "type": str,
+                },
+                "presentation": {
+                    "value": '> div:nth-child(5)',
+                    "type": str,
+                },
             }
         }
         
@@ -54,7 +67,6 @@ class Scraper():
         res = requests.get(url, headers=headers)
         html = res.text
         soup = bs4.BeautifulSoup(html, 'html.parser')
-        sleep(5)
         return soup
         
     def get_max_pages_num(self) -> int:
@@ -90,13 +102,33 @@ class Scraper():
         # Loop table rows (skip header)
         data = []
         rows = soup.select(self.selectors["table_row"])
-        for row in rows[1:]:
+        for row_index in range(1, len(rows)):
             
             # Scrape row data
             row_data = {}
+            selector_row = self.selectors["table_row"]
             table_columns_selecrtors = self.selectors["table_columns"]
-            for selector_name, selector_value in table_columns_selecrtors.items():
-                row_data[selector_name] = row.select_one(selector_value).text.strip()
+            for selector_name, selector_data in table_columns_selecrtors.items():
+                
+                selector_value = selector_data["value"]
+                selector_type = selector_data["type"]
+                
+                # Get value
+                selector_row = f"{selector_row}:nth-child({row_index + 1})"
+                selector_row_value = f"{selector_row} {selector_value}"
+                values_elems = soup.select(selector_row_value)
+                values = list(map(
+                    lambda value: value.text.replace(",", "").strip(),
+                    values_elems
+                ))
+                
+                if selector_type == str:
+                    values = values[0]
+                    for char in ["\n", "\t", "\r"]:
+                        values = values.replace(char, "")
+                  
+                # Clean and save value
+                row_data[selector_name] = values
         
             # Save row data
             data.append(row_data)
