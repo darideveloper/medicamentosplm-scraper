@@ -1,5 +1,6 @@
 import bs4
 import requests
+from time import sleep
 
 from libs.logs import logger
 
@@ -67,6 +68,7 @@ class Scraper():
         res = requests.get(url, headers=headers)
         html = res.text
         soup = bs4.BeautifulSoup(html, 'html.parser')
+        sleep(5)
         return soup
         
     def get_max_pages_num(self) -> int:
